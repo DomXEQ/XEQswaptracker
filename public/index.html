@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XEQ Swap Tracker - Equilibria Horizon</title>
+    <meta name="description" content="Equilibria Horizon Swap Transparency Tracker - Real-time auditable swap participation metrics">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="sidebar-brand">
+                    <span class="sidebar-logo-emoji">🔄</span>
+                    <span class="brand-text">XEQ Swap Tracker</span>
+                </a>
+                <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h18M3 6h18M3 18h18"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sidebar-search">
+                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" class="sidebar-search-input" id="searchInput" placeholder="Search txid or address..." onkeypress="handleSearchKeypress(event)">
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">TRANSPARENCY</div>
+                    <button class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                        <span>Dashboard</span>
+                    </button>
+                    <button class="nav-item" data-page="ledger" onclick="navigateTo('ledger')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/>
+                        </svg>
+                        <span>Transaction Ledger</span>
+                    </button>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">EXPORTS</div>
+                    <button class="nav-item" onclick="downloadExport('csv')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <span>Download CSV</span>
+                    </button>
+                    <button class="nav-item" onclick="downloadExport('json')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <span>Download JSON</span>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="sidebar-stats">
+                    <div class="sidebar-stat">
+                        <span class="sidebar-stat-label">Height</span>
+                        <span class="sidebar-stat-value" id="sidebarHeight">--</span>
+                    </div>
+                    <div class="sidebar-stat">
+                        <span class="sidebar-stat-label">Swaps</span>
+                        <span class="sidebar-stat-value" id="sidebarSwaps">--</span>
+                    </div>
+                </div>
+                <div class="network-indicator">
+                    <div class="network-status-dot" id="statusDot"></div>
+                    <div class="network-info">
+                        <span class="network-label" id="swapStatus">Loading...</span>
+                        <span class="network-version" id="networkLabel">--</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header slim">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12h18M3 6h18M3 18h18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="header-right">
+                    <div class="header-stat">
+                        <span class="header-stat-label">LAST UPDATE</span>
+                        <span class="header-stat-value" id="lastUpdate">--</span>
+                    </div>
+                    <div class="live-indicator" id="liveIndicator">
+                        <span class="live-dot"></span>
+                        <span class="status-text">CONNECTING</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Dashboard Page -->
+                <div class="page-content active" id="page-dashboard">
+                    <!-- Swap Status Banner -->
+                    <div class="status-banner" id="statusBanner">
+                        <div class="status-badge" id="statusBadge">
+                            <span class="status-text">LOADING</span>
+                        </div>
+                        <div class="status-info">
+                            <div class="status-detail">
+                                <span class="detail-label">Window Start</span>
+                                <span class="detail-value" id="windowStartBlock">--</span>
+                            </div>
+                            <div class="status-detail">
+                                <span class="detail-label">Snapshot Block</span>
+                                <span class="detail-value" id="snapshotBlock">--</span>
+                            </div>
+                            <div class="status-detail">
+                                <span class="detail-label">Current Height</span>
+                                <span class="detail-value" id="currentHeight">--</span>
+                            </div>
+                            <div class="status-detail">
+                                <span class="detail-label">Blocks Remaining</span>
+                                <span class="detail-value" id="blocksRemaining">--</span>
+                            </div>
+                            <div class="status-detail">
+                                <span class="detail-label">Est. Time Left</span>
+                                <span class="detail-value" id="timeRemaining">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deposit Address Banner -->
+                    <div class="deposit-banner" id="depositBanner">
+                        <div class="deposit-label">Deposit Address</div>
+                        <div class="deposit-address-row">
+                            <code class="deposit-address" id="depositAddress">--</code>
+                            <button class="copy-btn" onclick="copyToClipboard(document.getElementById('depositAddress').textContent)">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Global Metrics Grid -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Total Verified XEQ</div>
+                                <div class="metric-value accent" id="totalVerifiedXEQ">--</div>
+                                <div class="metric-sub" id="totalVerifiedCount">-- transactions</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon success">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <polyline points="22,4 12,14.01 9,11.01"/>
+                                </svg>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Total Paid Out</div>
+                                <div class="metric-value" id="totalPaidXEQ">--</div>
+                                <div class="metric-sub" id="totalPaidCount">-- transactions</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Unique Contributors</div>
+                                <div class="metric-value" id="uniqueContributors">--</div>
+                                <div class="metric-sub">distinct addresses</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                                </svg>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Total Submissions</div>
+                                <div class="metric-value" id="totalSubmissions">--</div>
+                                <div class="metric-sub">swap requests submitted</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Holders Distribution Chart -->
+                    <div class="panel-row">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
+                                        <path d="M22 12A10 10 0 0 0 12 2v10z"/>
+                                    </svg>
+                                    Holders Distribution
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="chart-container">
+                                    <div class="donut-wrap">
+                                        <svg class="donut-chart" viewBox="0 0 160 160" id="holdersDonut">
+                                            <circle class="donut-track" cx="80" cy="80" r="60" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="20"/>
+                                        </svg>
+                                        <div class="donut-center">
+                                            <span class="donut-total" id="donutTotal">0</span>
+                                            <span class="donut-label">Wallets</span>
+                                        </div>
+                                    </div>
+                                    <div class="chart-legend" id="holdersLegend">
+                                        <!-- Populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 20V10"/>
+                                        <path d="M18 20V4"/>
+                                        <path d="M6 20v-4"/>
+                                    </svg>
+                                    Top Contributors
+                                </div>
+                                <span class="panel-badge">Top 10</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="contributors-list" id="topContributors">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Snapshot Commitment Panel (shown when closed) -->
+                    <div class="panel snapshot-panel" id="snapshotPanel" style="display: none;">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                                    <polyline points="9,12 11,14 15,10"/>
+                                </svg>
+                                Snapshot Commitment
+                            </div>
+                            <span class="panel-badge success">FINALIZED</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="snapshot-info">
+                                <div class="snapshot-row">
+                                    <span class="snapshot-label">Ledger Hash (SHA256)</span>
+                                    <code class="snapshot-hash" id="ledgerHash">--</code>
+                                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('ledgerHash').textContent)">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="snapshot-meta">
+                                    <div class="snapshot-item">
+                                        <span class="snapshot-label">Window Start</span>
+                                        <span class="snapshot-value" id="windowStart">--</span>
+                                    </div>
+                                    <div class="snapshot-item">
+                                        <span class="snapshot-label">Window End</span>
+                                        <span class="snapshot-value" id="windowEnd">--</span>
+                                    </div>
+                                    <div class="snapshot-item">
+                                        <span class="snapshot-label">Payouts Enabled</span>
+                                        <span class="snapshot-value" id="payoutsEnabled">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <p class="disclaimer">Final distribution is computed from this immutable ledger snapshot. Download the export to verify independently.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ledger Page -->
+                <div class="page-content" id="page-ledger">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                Transaction Ledger
+                            </div>
+                            <div class="panel-actions">
+                                <select class="filter-select" id="statusFilter" onchange="loadTransactions()">
+                                    <option value="all">All Status</option>
+                                    <option value="verified">Verified</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                                <select class="filter-select" id="sortFilter" onchange="loadTransactions()">
+                                    <option value="time">Sort by Time</option>
+                                    <option value="amount">Sort by Amount</option>
+                                    <option value="height">Sort by Height</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table class="data-table" id="ledgerTable">
+                                    <thead>
+                                        <tr>
+                                            <th>TXID</th>
+                                            <th>Amount (XEQ)</th>
+                                            <th>Status</th>
+                                            <th>Confirmations</th>
+                                            <th>Height</th>
+                                            <th>Destination</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ledgerBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="table-empty" id="ledgerEmpty" style="display: none;">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                <h3>No transactions found</h3>
+                                <p>Try adjusting your filters or check back later.</p>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <div class="pagination" id="pagination">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participant Page -->
+                <div class="page-content" id="page-participant">
+                    <div class="participant-header" id="participantHeader">
+                        <div class="participant-address">
+                            <span class="address-label">Participant Address</span>
+                            <div class="address-row">
+                                <code class="address-value" id="participantAddress">--</code>
+                                <button class="copy-btn" onclick="copyToClipboard(document.getElementById('participantAddress').textContent)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="share-btn" onclick="shareParticipant()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                            Share Link
+                        </button>
+                    </div>
+
+                    <div class="metrics-grid participant-metrics">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Total Verified</div>
+                                <div class="metric-value accent" id="participantTotal">--</div>
+                                <div class="metric-sub" id="participantTxCount">-- transactions</div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12,6 12,12 16,14"/>
+                                </svg>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">First Seen</div>
+                                <div class="metric-value" id="participantFirstSeen">--</div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12,6 12,12 16,14"/>
+                                </svg>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-label">Last Seen</div>
+                                <div class="metric-value" id="participantLastSeen">--</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Transaction History</div>
+                        </div>
+                        <div class="panel-body">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>TXID</th>
+                                            <th>Amount (XEQ)</th>
+                                            <th>Status</th>
+                                            <th>Height</th>
+                                            <th>Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="participantTxBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Detail Page -->
+                <div class="page-content" id="page-tx">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">Transaction Details</div>
+                            <span class="panel-badge" id="txStatusBadge">--</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="tx-details" id="txDetails">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
