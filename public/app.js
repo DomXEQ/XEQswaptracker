@@ -455,6 +455,7 @@ function renderTopContributors(contributors) {
 async function loadTransactions() {
     const status = document.getElementById('statusFilter').value;
     const sort = document.getElementById('sortFilter').value;
+    const address = document.getElementById('addressFilter').value.trim();
 
     const params = new URLSearchParams({
         page: state.pagination.page,
@@ -463,6 +464,8 @@ async function loadTransactions() {
         sort,
         order: 'desc'
     });
+
+    if (address) params.set('address', address);
 
     const data = await fetchAPI(`/api/txs?${params}`);
 
@@ -486,17 +489,22 @@ function renderTransactions(txs) {
 
     empty.style.display = 'none';
 
-    tbody.innerHTML = txs.map(tx => `
+    tbody.innerHTML = txs.map(tx => {
+        const payoutXEQ = tx.newAmountXEQ && parseFloat(tx.newAmountXEQ) > 0
+            ? formatXEQ(tx.newAmountXEQ)
+            : '--';
+        return `
         <tr onclick="loadTransaction('${tx.txid}')" style="cursor: pointer;">
             <td class="mono hash" title="${tx.txid}">${tx.txid.slice(0, 8)}...${tx.txid.slice(-8)}</td>
-            <td class="amount">${formatXEQ(tx.newAmountXEQ || tx.amountXEQ)}</td>
+            <td class="amount">${formatXEQ(tx.amountXEQ)}</td>
+            <td class="amount">${payoutXEQ}</td>
             <td><span class="badge ${tx.status.toLowerCase()}">${tx.status}</span></td>
             <td class="mono">${tx.confirmations || '--'}</td>
             <td class="mono">${tx.height ? formatNumber(tx.height) : '--'}</td>
             <td class="mono hash" title="${tx.newAddress}">${maskAddress(tx.newAddress)}</td>
             <td>${formatTime(tx.createdAt)}</td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function renderPagination(pagination) {
@@ -536,6 +544,11 @@ function renderPagination(pagination) {
     html += `<button class="pagination-btn" ${page >= totalPages ? 'disabled' : ''} onclick="goToPage(${page + 1})">Next</button>`;
 
     container.innerHTML = html;
+}
+
+function filterTransactions() {
+    state.pagination.page = 1;
+    loadTransactions();
 }
 
 function goToPage(page) {

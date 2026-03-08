@@ -331,14 +331,15 @@
                                 Transaction Ledger
                             </div>
                             <div class="panel-actions">
-                                <select class="filter-select" id="statusFilter" onchange="loadTransactions()">
+                                <input type="text" class="filter-input" id="addressFilter" placeholder="Filter by address..." oninput="filterTransactions()">
+                                <select class="filter-select" id="statusFilter" onchange="filterTransactions()">
                                     <option value="all">All Status</option>
                                     <option value="verified">Verified</option>
                                     <option value="paid">Paid</option>
                                     <option value="pending">Pending</option>
                                     <option value="rejected">Rejected</option>
                                 </select>
-                                <select class="filter-select" id="sortFilter" onchange="loadTransactions()">
+                                <select class="filter-select" id="sortFilter" onchange="filterTransactions()">
                                     <option value="time">Sort by Time</option>
                                     <option value="amount">Sort by Amount</option>
                                     <option value="height">Sort by Height</option>
@@ -352,6 +353,7 @@
                                         <tr>
                                             <th>TXID</th>
                                             <th>Amount (XEQ)</th>
+                                            <th>Payout (XEQ)</th>
                                             <th>Status</th>
                                             <th>Confirmations</th>
                                             <th>Height</th>

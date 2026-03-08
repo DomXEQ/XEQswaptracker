@@ -1150,6 +1150,32 @@ a:hover {
     border-color: var(--accent);
 }
 
+.filter-input {
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    width: 220px;
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.filter-input::placeholder {
+    color: var(--text-muted);
+}
+
+.filter-input:hover {
+    border-color: var(--border-panel);
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .pagination {
     display: flex;
     align-items: center;

@@ -385,8 +385,9 @@ app.get('/api/txs', async (req, res) => {
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 25));
         const status = req.query.status;
+        const addressFilter = req.query.address;
         const sort = req.query.sort || 'time';
-        const order = req.query.order === 'asc' ? 1 : -1;
+        const order = req.query.order === 'asc' ? -1 : 1;
 
         // Use cached swaps or fetch fresh
         let swaps = cachedSwaps;
@@ -409,6 +410,14 @@ app.get('/api/txs', async (req, res) => {
 
         // Filter by status
         let filtered = [...swaps];
+
+        // Filter by receiving address
+        if (addressFilter && addressFilter.length >= 6) {
+            filtered = filtered.filter(s =>
+                s.new_address?.toLowerCase().includes(addressFilter.toLowerCase())
+            );
+        }
+
         if (status && status !== 'all') {
             switch (status.toLowerCase()) {
                 case 'verified':
