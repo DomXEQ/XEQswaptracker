@@ -435,20 +435,18 @@ app.get('/api/txs', async (req, res) => {
             }
         }
 
-        // Sort
+        // Sort — order=1 is descending (largest/newest first), order=-1 is ascending
         filtered.sort((a, b) => {
             let valA, valB;
             if (sort === 'amount') {
-                valA = parseFloat(a.amount || 0);
-                valB = parseFloat(b.amount || 0);
-            } else if (sort === 'height') {
-                valA = parseInt(a.height || 0);
-                valB = parseInt(b.height || 0);
+                valA = parseFloat(a.new_amount || a.amount || 0);
+                valB = parseFloat(b.new_amount || b.amount || 0);
             } else {
                 valA = new Date(a.created_at || 0).getTime();
                 valB = new Date(b.created_at || 0).getTime();
             }
-            return (valB - valA) * order;
+            // descending: valB - valA; ascending: valA - valB
+            return order === 1 ? valB - valA : valA - valB;
         });
 
         const total = filtered.length;
@@ -457,6 +455,7 @@ app.get('/api/txs', async (req, res) => {
 
         const atomicUnits = config.swap.atomicUnits;
 
+        res.set('Cache-Control', 'no-store');
         res.json({
             transactions: txs.map(tx => formatTransaction(tx, atomicUnits)),
             pagination: {

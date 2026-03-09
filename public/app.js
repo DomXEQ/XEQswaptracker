@@ -499,8 +499,6 @@ function renderTransactions(txs) {
             <td class="amount">${formatXEQ(tx.amountXEQ)}</td>
             <td class="amount">${payoutXEQ}</td>
             <td><span class="badge ${tx.status.toLowerCase()}">${tx.status}</span></td>
-            <td class="mono">${tx.confirmations || '--'}</td>
-            <td class="mono">${tx.height ? formatNumber(tx.height) : '--'}</td>
             <td class="mono hash" title="${tx.newAddress}">${maskAddress(tx.newAddress)}</td>
             <td>${formatTime(tx.createdAt)}</td>
         </tr>

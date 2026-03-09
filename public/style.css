@@ -1151,15 +1151,18 @@ a:hover {
 }
 
 .filter-input {
+    -webkit-appearance: none;
+    appearance: none;
     padding: var(--space-xs) var(--space-sm);
-    background: var(--bg-input);
+    background-color: var(--bg-input);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-family: var(--font-mono);
     font-size: 0.8rem;
-    width: 220px;
-    transition: all var(--duration-fast) var(--ease-out);
+    width: 200px;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .filter-input::placeholder {
