@@ -490,13 +490,16 @@ function renderTransactions(txs) {
     empty.style.display = 'none';
 
     tbody.innerHTML = txs.map(tx => {
-        const payoutXEQ = tx.newAmountXEQ && parseFloat(tx.newAmountXEQ) > 0
+        const swapXEQ = tx.newAmountXEQ && parseFloat(tx.newAmountXEQ) > 0
+            ? formatXEQ(tx.newAmountXEQ)
+            : formatXEQ(tx.amountXEQ);
+        const payoutXEQ = tx.status === 'PAID' && tx.newAmountXEQ && parseFloat(tx.newAmountXEQ) > 0
             ? formatXEQ(tx.newAmountXEQ)
             : '--';
         return `
         <tr onclick="loadTransaction('${tx.txid}')" style="cursor: pointer;">
             <td class="mono hash" title="${tx.txid}">${tx.txid.slice(0, 8)}...${tx.txid.slice(-8)}</td>
-            <td class="amount">${formatXEQ(tx.amountXEQ)}</td>
+            <td class="amount">${swapXEQ}</td>
             <td class="amount">${payoutXEQ}</td>
             <td><span class="badge ${tx.status.toLowerCase()}">${tx.status}</span></td>
             <td class="mono hash" title="${tx.newAddress}">${maskAddress(tx.newAddress)}</td>
