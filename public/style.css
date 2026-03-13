@@ -742,6 +742,7 @@ a:hover {
 .metric-content {
     flex: 1;
     min-width: 0;
+    container-type: inline-size;
 }
 
 .metric-label {
@@ -754,10 +755,12 @@ a:hover {
 
 .metric-value {
     font-family: var(--font-mono);
-    font-size: 1.5rem;
+    font-size: clamp(0.75rem, 9cqw, 1.5rem);
     font-weight: 600;
     color: var(--text-bright);
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .metric-value.accent {
