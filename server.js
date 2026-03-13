@@ -112,9 +112,9 @@ async function refreshCache() {
             cachedSummaryTime = Date.now();
         }
 
-        const swapsResult = await swapApi.getSwaps(500, 0);
-        if (swapsResult.ok && swapsResult.rows) {
-            cachedSwaps = swapsResult.rows;
+        const allRows = await swapApi.getAllSwaps();
+        if (allRows.length > 0) {
+            cachedSwaps = allRows;
             cachedSwapsTime = Date.now();
         }
 
@@ -393,9 +393,9 @@ app.get('/api/txs', async (req, res) => {
         let swaps = cachedSwaps;
         if (!swaps) {
             try {
-                const result = await swapApi.getSwaps(500, 0);
-                if (result.ok && result.rows) {
-                    swaps = result.rows;
+                const rows = await swapApi.getAllSwaps();
+                if (rows.length > 0) {
+                    swaps = rows;
                     cachedSwaps = swaps;
                     cachedSwapsTime = Date.now();
                 }
